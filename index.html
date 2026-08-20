@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>圆点闪视</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #000; color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    overflow: hidden;
+  }
+  .page {
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    height: 100vh; height: 100dvh; padding: 24px; text-align: center;
+  }
+  .page.active { display: flex; }
+  #setup { justify-content: flex-start; padding-top: 48px; overflow-y: auto; }
+  #result { justify-content: flex-start; padding-top: 40px; overflow-y: auto; }
+  h1 { font-size: 28px; font-weight: 600; margin: 0 0 8px; }
+  .sub { color: #8e8e93; font-size: 14px; margin: 0 0 28px; }
+  .field { width: 100%; max-width: 360px; margin-bottom: 20px; text-align: left; }
+  .field > label { display: block; font-size: 14px; color: #c7c7cc; margin-bottom: 8px; }
+  .field input[type=number] {
+    width: 100%; padding: 12px; font-size: 16px; border-radius: 12px;
+    border: 1px solid #3a3a3c; background: #1c1c1e; color: #fff;
+  }
+  .row2 { display: flex; gap: 12px; width: 100%; max-width: 360px; }
+  .row2 .field { flex: 1; }
+  .seg { display: flex; gap: 8px; }
+  .seg label { flex: 1; }
+  .seg input { display: none; }
+  .seg label span {
+    display: block; text-align: center; padding: 12px 0; border-radius: 12px;
+    border: 1px solid #3a3a3c; background: #1c1c1e; color: #fff;
+    font-size: 14px; cursor: pointer;
+  }
+  .seg input:checked + span { background: #0a84ff; border-color: #0a84ff; }
+  .btn {
+    width: 100%; max-width: 360px; padding: 16px; font-size: 17px; font-weight: 600;
+    border: none; border-radius: 14px; background: #0a84ff; color: #fff;
+    cursor: pointer; margin-top: 8px;
+  }
+  .btn:active { opacity: .8; }
+  #cdNum { font-size: 140px; font-weight: 700; line-height: 1; }
+  #test { padding: 0; position: relative; }
+  #board { width: 100%; flex: 1; display: block; background: #000; }
+  #progress {
+    position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: 0; right: 0;
+    text-align: center; color: #8e8e93; font-size: 14px; pointer-events: none;
+  }
+  #answer {
+    position: absolute; left: 0; right: 0; bottom: 0; display: none;
+    flex-direction: column; gap: 14px;
+    background: #1c1c1e; padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    border-top-left-radius: 20px; border-top-right-radius: 20px;
+  }
+  .input-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .input-row label { font-size: 16px; }
+  .input-row input {
+    width: 130px; padding: 12px; font-size: 18px; text-align: center; border-radius: 12px;
+    border: 1px solid #3a3a3c; background: #000; color: #fff;
+  }
+  .result-box { width: 100%; max-width: 420px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  th, td { padding: 10px 6px; border-bottom: 1px solid #2c2c2e; text-align: center; }
+  th { color: #8e8e93; font-weight: 500; }
+  td.ok { color: #30d158; }
+  td.no { color: #ff453a; }
+</style>
+</head>
+<body>
+  <section id="setup" class="page active">
+    <h1>圆点闪视</h1>
+    <p class="sub">瞬间记住闪现的圆点数量，训练你的专注力</p>
+
+    <div class="field">
+      <label>每次题数（默认 10）</label>
+      <input type="number" id="count" value="10" min="1" inputmode="numeric">
+    </div>
+
+    <div class="row2">
+      <div class="field"><label>最少点数</label><input type="number" id="minP" value="9" min="1" inputmode="numeric"></div>
+      <div class="field"><label>最大点数</label><input type="number" id="maxP" value="13" min="1" inputmode="numeric"></div>
+    </div>
+
+    <div class="field">
+      <label>圆点颜色数量（最多 3 种）</label>
+      <div class="seg">
+        <label><input type="radio" name="colors" value="1" checked><span>1 种（红）</span></label>
+        <label><input type="radio" name="colors" value="2"><span>2 种（红蓝）</span></label>
+        <label><input type="radio" name="colors" value="3"><span>3 种</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>圆点显示时间</label>
+      <div class="seg">
+        <label><input type="radio" name="duration" value="0.5"><span>0.5 秒</span></label>
+        <label><input type="radio" name="duration" value="1" checked><span>1 秒</span></label>
+        <label><input type="radio" name="duration" value="1.5"><span>1.5 秒</span></label>
+        <label><input type="radio" name="duration" value="2"><span>2 秒</span></label>
+      </div>
+    </div>
+
+    <button class="btn" id="startBtn">开始测试</button>
+  </section>
+
+  <section id="countdown" class="page">
+    <div id="cdNum">3</div>
+  </section>
+
+  <section id="test" class="page">
+    <div id="progress"></div>
+    <canvas id="board"></canvas>
+    <div id="answer">
+      <div id="answerInputs"></div>
+      <button class="btn" id="nextBtn">下一题</button>
+    </div>
+  </section>
+
+  <section id="result" class="page">
+    <div class="result-box">
+      <h1>测试结果</h1>
+      <p id="accuracy" class="sub"></p>
+      <div id="resultTable"></div>
+      <button class="btn" id="retryBtn" style="margin-top:24px;">再来一次</button>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
